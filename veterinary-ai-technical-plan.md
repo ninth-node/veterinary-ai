@@ -43,6 +43,12 @@ This document outlines the development of a revolutionary AI-first veterinary cl
 }
 ```
 
+**[TODO: Database Configuration]** - Specify production database connection strings, backup strategy, replication setup, and connection pooling parameters. Need to determine: primary/replica architecture, automated backup schedule (recommend daily with point-in-time recovery), and disaster recovery RTO/RPO targets.
+
+**[TODO: Cache Configuration]** - Define Redis cluster configuration including: number of nodes, persistence strategy (RDB vs AOF), eviction policies, and memory allocation per environment (dev/staging/prod).
+
+**[TODO: Payment Processor Selection]** - Research and select veterinary-specific payment processors beyond Stripe. Consider: CareCredit integration API, ScratchPay API, Veterinary Payment Plans (VPP), and traditional processors' veterinary-specific features. Document API capabilities, fees, and integration complexity.
+
 ### AI & Machine Learning Stack (LangGraph + ML)
 ```json
 {
@@ -57,6 +63,14 @@ This document outlines the development of a revolutionary AI-first veterinary cl
 }
 ```
 
+**[TODO: LLM Provider Configuration]** - Determine LLM usage strategy and cost optimization: Which provider for which use case? Define fallback strategy when primary provider is unavailable. Set up API key rotation, rate limiting, and cost monitoring. Estimate monthly LLM costs based on expected usage patterns (appointments, diagnostics, customer support).
+
+**[TODO: Vector Database Selection]** - Choose between ChromaDB and Weaviate based on: scalability requirements, query performance benchmarks, cloud hosting costs, and hybrid search capabilities. Need to determine embedding model (OpenAI ada-002 vs open-source alternatives) and chunking strategy for medical documents.
+
+**[TODO: Medical AI Model Training Data]** - Identify and acquire veterinary-specific training datasets for: X-ray analysis (species-specific), ultrasound interpretation, lab result patterns, and breed-specific health conditions. Address data licensing, privacy compliance, and annotation requirements. Consider partnerships with veterinary schools or research institutions.
+
+**[TODO: Model Compliance & Validation]** - Define validation strategy for AI models used in medical context: How to ensure FDA/regulatory compliance for diagnostic assistance? Establish model performance benchmarks, monitoring for model drift, and veterinarian oversight protocols.
+
 ### E-Commerce & Integration Layer
 ```json
 {
@@ -69,6 +83,12 @@ This document outlines the development of a revolutionary AI-first veterinary cl
   "recommendations": "TensorFlow Recommenders + collaborative filtering"
 }
 ```
+
+**[TODO: Supplier Partnership Agreements]** - Establish partnerships and API access with major pet product distributors: Patterson Veterinary, MWI Animal Health, Covetrus, Henry Schein Animal Health, and direct manufacturers (Hill's, Royal Canin, Purina Pro Plan). Negotiate wholesale pricing, drop-shipping capabilities, inventory data feeds, and integration requirements. Document each supplier's API specifications, authentication methods, and data formats.
+
+**[TODO: Shipping Strategy]** - Define shipping cost calculation logic, carrier selection algorithm, and delivery time estimates. Need to determine: free shipping thresholds, overnight shipping for prescriptions, cold chain logistics for refrigerated items, and returns/exchange process. Evaluate ShipStation alternatives and negotiate carrier volume discounts.
+
+**[TODO: Prescription Verification System]** - Design and implement prescription medication approval workflow: veterinarian e-signature requirements, prescription expiration tracking, refill authorization process, controlled substance handling (DEA compliance), and integration with state prescription monitoring programs (PDMP). Ensure compliance with federal and state pharmacy regulations.
 
 ## 🏗 System Architecture
 
@@ -127,6 +147,14 @@ External Integrations
     ├── Insurance claim processing
     └── Appointment scheduling integrations
 ```
+
+**[TODO: DICOM Equipment Compatibility Testing]** - Create compatibility matrix for popular veterinary imaging equipment brands: IDEXX, Agfa, Sound Technologies, Sedecal, MinXray. Test DICOM integration with each manufacturer's PACS systems. Document specific DICOM tags used in veterinary imaging (species, breed, body part variations) and any vendor-specific implementations that deviate from standard DICOM.
+
+**[TODO: HL7 Interface Specifications]** - Define specific HL7 message types needed (ORU^R01 for lab results, ADT^A01 for patient admission, etc.). Identify compatible veterinary lab analyzers: IDEXX ProCyte Dx, Catalyst, Heska Element, Abaxis VetScan. Document message mapping, error handling, and acknowledgment protocols for each lab system.
+
+**[TODO: Insurance Integration Partners]** - Research and establish integrations with pet insurance providers: Trupanion, Nationwide, ASPCA Pet Insurance, Healthy Paws, Embrace. Determine: claim submission formats (API vs file upload), pre-authorization workflows, real-time coverage verification capabilities, and automated claim status tracking. This is complex as pet insurance standards are not as mature as human health insurance.
+
+**[TODO: Telemedicine Legal Compliance]** - Verify telemedicine regulations across all 50 states for veterinary practice: VCPR (Veterinarian-Client-Patient Relationship) requirements, prescribing restrictions, state licensing requirements for remote consultations. Some states prohibit certain telemedicine activities. Document state-by-state requirements and implement geo-blocking where necessary.
 
 ## 🤖 LangGraph Agent Architecture
 
@@ -586,9 +614,12 @@ CREATE TABLE business_metrics (
 # DICOM Integration for Medical Imaging
 class DICOMIntegration:
     def __init__(self):
+        # [TODO: DICOM Server Configuration] - Define actual DICOM server endpoints, ports, and AE titles for each environment.
+        # Need to specify: dev/staging/prod server addresses, port ranges (typically 104 or 11112),
+        # unique Application Entity titles per clinic, and SSL/TLS requirements for secure DICOM transmission.
         self.dicom_server_config = {
-            'host': settings.DICOM_SERVER_HOST,
-            'port': settings.DICOM_SERVER_PORT,
+            'host': settings.DICOM_SERVER_HOST,  # e.g., 'dicom.vetai-platform.com'
+            'port': settings.DICOM_SERVER_PORT,  # e.g., 11112
             'ae_title': 'VET_CLINIC_AI'
         }
     
@@ -834,12 +865,18 @@ class CacheManager:
 ## 🔒 Security & Compliance
 
 ### HIPAA Compliance Implementation
+
+**[TODO: HIPAA Applicability Assessment]** - Determine if HIPAA actually applies to veterinary records. IMPORTANT: HIPAA typically applies only to human health information, NOT veterinary/animal health records. However, some states have specific veterinary privacy laws. Research state-specific veterinary record privacy requirements (e.g., California CMIA, state veterinary board regulations). Clarify whether to implement HIPAA-level security as a best practice even if not legally required, or focus on state veterinary privacy laws and general data protection standards (e.g., SOC 2, ISO 27001).
+
 ```python
 class HIPAACompliantStorage:
     """Secure storage of protected health information"""
-    
+
     def __init__(self):
-        self.encryption_key = Fernet.generate_key()
+        # [TODO: Encryption Key Management] - Implement proper key management using AWS KMS, Azure Key Vault, or HashiCorp Vault.
+        # DO NOT generate keys in code. Define: key rotation schedule (recommend quarterly), access controls,
+        # encryption at rest and in transit requirements, and backup key escrow procedures.
+        self.encryption_key = Fernet.generate_key()  # REPLACE with proper key management service
         self.cipher_suite = Fernet(self.encryption_key)
     
     async def store_phi(self, patient_id: int, phi_data: dict):
@@ -991,15 +1028,24 @@ class VeterinaryAnalytics:
 
 ## 🚀 Deployment Architecture
 
+**[TODO: Cloud Provider Selection]** - Choose primary cloud provider based on: cost analysis for expected workloads, DICOM/medical imaging storage costs, GPU availability for AI workloads, compliance certifications (SOC 2, ISO 27001), geographic data residency requirements, and disaster recovery capabilities. Compare: AWS (Amazon HealthLake for FHIR, SageMaker for ML), Google Cloud (Healthcare API, Vertex AI), Azure (Health Data Services, Azure ML), or multi-cloud strategy.
+
+**[TODO: Infrastructure as Code]** - Select IaC tool (Terraform, Pulumi, AWS CDK) and define environment provisioning strategy. Document: network architecture (VPCs, subnets, security groups), database cluster setup, Kubernetes cluster configuration, load balancer setup, CDN configuration, and disaster recovery infrastructure.
+
+**[TODO: SSL/TLS Certificate Management]** - Define certificate strategy: wildcard certificates vs individual certificates, certificate authority (Let's Encrypt vs commercial CA), automated renewal process, certificate pinning for mobile apps, and mTLS for service-to-service communication.
+
 ### Kubernetes Deployment
 ```yaml
 # Production Deployment Configuration
+# [TODO: Kubernetes Cluster Specifications] - Define cluster size, node types, auto-scaling parameters,
+# and resource quotas. Specify: minimum 3 nodes for HA, node instance types (recommend: compute-optimized for API,
+# memory-optimized for ML inference, storage-optimized for DICOM), and cluster version update strategy.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: veterinary-api
 spec:
-  replicas: 3
+  replicas: 3  # [TODO: Define actual replica count based on load testing results]
   selector:
     matchLabels:
       app: veterinary-api
@@ -1059,8 +1105,16 @@ spec:
 ```
 
 ### CI/CD Pipeline
+
+**[TODO: CI/CD Security & Testing Requirements]** - Define comprehensive testing and security requirements before production deployment: unit test coverage threshold (recommend ≥80%), integration test suites, end-to-end testing strategy, performance/load testing benchmarks, security scanning tools (SAST, DAST, dependency scanning), database migration testing, and rollback procedures. Establish deployment gates and approval processes for production releases.
+
+**[TODO: Environment Strategy]** - Define environment promotion strategy: development → staging → production workflow, feature flag management, database migration coordination across environments, secrets management per environment, and monitoring/alerting configuration per environment.
+
 ```yaml
 # GitHub Actions Workflow
+# [TODO: CI/CD Tool Selection] - Confirm GitHub Actions vs alternatives (GitLab CI, CircleCI, Jenkins).
+# GitHub Actions chosen for: tight GitHub integration, generous free tier, good marketplace of actions.
+# Consider cost at scale and evaluate GitHub Enterprise if needed for advanced security features.
 name: Deploy Veterinary SaaS
 on:
   push:
